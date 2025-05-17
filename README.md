@@ -7,7 +7,7 @@ A microservices-based MVP for mood tracking and suggestion.
 - mood-service: Accepts mood logs and provides suggestions
 - stats-service: Consumes logs and stores/analyzes them
 - ActiveMQ: Message broker
-- Postgres: Stats DB
+- H2: Stats data persistance (minimal)
 - Keycloak: Auth server
 
 ## To Run

@@ -1,13 +1,41 @@
 package com.moodcheck.mood_service.controller;
 
+import com.moodcheck.mood_service.service.QuoteService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
+import com.moodcheck.shared.Mood;
+import com.moodcheck.mood_service.service.MoodService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
 @RestController
+@RequestMapping("/moods")
 public class MoodController {
 
-    @GetMapping("/mood/check")
+    private final MoodService moodService;
+    private final QuoteService quoteService;
+
+    @Autowired
+    public MoodController(MoodService moodService, QuoteService quoteService) {
+        this.moodService = moodService;
+        this.quoteService = quoteService;
+    }
+
+    @PostMapping
+    public String submitMood(@RequestBody Mood mood) {
+        moodService.processMood(mood);
+        return "Mood received and dispatched.";
+    }
+
+    // TODO : (? discuss) to integrate logic with services, possibly returns quote+color of most recent mood
+    @GetMapping("/quote")
+    public String getQuote() {
+        return quoteService.getRandomQuote();
+    }
+
+    @GetMapping("/check")
     public String checkStatsService() {
         RestTemplate restTemplate = new RestTemplate();
         String result = restTemplate.getForObject("http://localhost:8082/ping", String.class);
