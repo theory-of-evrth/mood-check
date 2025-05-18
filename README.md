@@ -1,6 +1,6 @@
 # MoodCheck
 
-A microservices-based MVP for mood tracking and suggestion.
+A microservices-based MVP for mood tracking and random quote.
 
 ## Services
 
@@ -12,15 +12,12 @@ A microservices-based MVP for mood tracking and suggestion.
 
 ## To Run
 
-Manually run each respective service. 
-
-(in the future, hopefully:)
-
 ```bash
 docker-compose up --build
 ```
+After that, manually run mood-service and stats-service. 
 
 ## Notes
 
 - Use Postman or curl to test endpoints.
-- Tokens required for /moods endpoint.
+- Tokens required for most endpoints, to check functionality without token, use /moods/check for moods-service, /ping for stats-service; or swagger-ui.html for either of them.
