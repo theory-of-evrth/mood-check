@@ -1,6 +1,8 @@
 package com.moodcheck.mood_service.controller;
 
+import com.moodcheck.mood_service.model.MoodColor;
 import com.moodcheck.mood_service.service.QuoteService;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -14,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Map;
 import java.util.Objects;
 
 @RestController
@@ -29,6 +32,7 @@ public class MoodController {
         this.quoteService = quoteService;
     }
 
+    @Operation(summary = "Soumettre une humeur", description = "Envoie une humeur vers la queue JMS pour traitement.")
     @PostMapping
     public String submitMood(@RequestBody Mood mood, @AuthenticationPrincipal Jwt jwt) {
         String userId = jwt.getSubject();
@@ -52,5 +56,18 @@ public class MoodController {
         RestTemplate restTemplate = new RestTemplate();
         String result = restTemplate.getForObject("http://localhost:8082/ping", String.class);
         return "Stats service says: " + result;
+    }
+
+    @GetMapping("/suggestion")
+    public Map<String, String> getSuggestionWithColor(@AuthenticationPrincipal Jwt jwt) {
+        String userId = jwt.getSubject();
+
+        String quote = quoteService.getRandomQuote();
+        String color = moodService.getColorForUser(userId);
+
+        return Map.of(
+                "quote", quote,
+                "color", color
+        );
     }
 }

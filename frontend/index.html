@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MoodCheck UI</title>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: auto; padding: 2rem; }
+    input, button, select { padding: 0.5rem; margin-top: 0.5rem; width: 100%; }
+    .result { margin-top: 1.5rem; padding: 1rem; border: 1px solid #ccc; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <h1>MoodCheck UI</h1>
+
+  <label for="username">Keycloak Username</label>
+  <input type="text" id="username" placeholder="Enter Keycloak username">
+
+  <label for="password">Keycloak Password</label>
+  <input type="password" id="password" placeholder="Enter Keycloak password">
+
+  <button onclick="login()">Login and Get Token</button>
+
+  <label for="token">JWT Token</label>
+  <input type="text" id="token" readonly>
+
+  <label for="userId">User ID (from token)</label>
+  <input type="text" id="userId" readonly>
+
+  <label for="mood">Mood</label>
+  <input type="text" id="mood" placeholder="e.g., happy, sad, angry">
+
+  <button onclick="submitMood()">Submit Mood</button>
+  <button onclick="getSuggestion()">Get Quote + Color</button>
+
+  <div class="result" id="resultBox" style="display:none;"></div>
+
+  <script>
+    async function login() {
+	  const username = document.getElementById('username').value;
+	  const password = document.getElementById('password').value;
+
+	  const data = new URLSearchParams();
+	  data.append("grant_type", "password");
+	  data.append("client_id", "ui-client");
+	  data.append("username", username);
+	  data.append("password", password);
+
+	  try {
+		const response = await axios.post(
+		  "http://localhost:8083/realms/bright/protocol/openid-connect/token",
+		  data,
+		  {
+			headers: {
+			  'Content-Type': 'application/x-www-form-urlencoded'
+			}
+		  }
+    );
+
+    const token = response.data.access_token;
+    const payload = JSON.parse(atob(token.split('.')[1]));
+
+    document.getElementById("token").value = token;
+    document.getElementById("userId").value = payload.sub;
+    showResult("Login successful!");
+  } catch (e) {
+    const err = e.response?.data?.error_description || e.message;
+    showResult("Login failed: " + err);
+  }
+}
+
+
+    async function submitMood() {
+      const token = document.getElementById('token').value;
+      const userId = document.getElementById('userId').value;
+      const mood = document.getElementById('mood').value;
+
+      const response = await fetch("http://localhost:8081/moods", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          userId: userId,
+          moodType: mood
+        })
+      });
+
+      const text = await response.text();
+      showResult(text);
+    }
+
+    async function getSuggestion() {
+      const token = document.getElementById('token').value;
+
+      const response = await fetch("http://localhost:8081/moods/suggestion", {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        showResult("Failed to fetch suggestion: " + response.status);
+        return;
+      }
+
+      const data = await response.json();
+      showResult(`<strong>Quote:</strong> ${data.quote}<br><strong>Color:</strong> <span style="color:${data.color}">${data.color}</span>`);
+    }
+
+    function showResult(content) {
+      const box = document.getElementById("resultBox");
+      box.innerHTML = content;
+      box.style.display = "block";
+    }
+  </script>
+</body>
+</html>
