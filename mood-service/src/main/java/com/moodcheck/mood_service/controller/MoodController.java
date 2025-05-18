@@ -1,6 +1,9 @@
 package com.moodcheck.mood_service.controller;
 
 import com.moodcheck.mood_service.service.QuoteService;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
@@ -9,6 +12,9 @@ import com.moodcheck.shared.Mood;
 import com.moodcheck.mood_service.service.MoodService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/moods")
@@ -24,7 +30,13 @@ public class MoodController {
     }
 
     @PostMapping
-    public String submitMood(@RequestBody Mood mood) {
+    public String submitMood(@RequestBody Mood mood, @AuthenticationPrincipal Jwt jwt) {
+        String userId = jwt.getSubject();
+
+        if (!Objects.equals(mood.getUserId(), userId))
+        {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot create moods for other users");
+        }
         moodService.processMood(mood);
         return "Mood received and dispatched.";
     }
